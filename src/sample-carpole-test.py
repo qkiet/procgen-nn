@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow import keras
    
-model = keras.models.load_model('trained-model-180')
+model = keras.models.load_model('trained-model')
 env = gym.make('CartPole-v1', render_mode="human")
 test_episodes = 5
 
