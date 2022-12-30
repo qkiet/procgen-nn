@@ -131,4 +131,6 @@ dmypy.json
 *.exe
 Include/
 
-trained-model-*/
+*trained-model/
+pyvenv.cfg
+Scripts/
