@@ -12,11 +12,14 @@ from tensorflow import keras
 from collections import deque
 import time
 import random
+import sys
 
-
+"""
+    Usage: python <this script> <number of training episodes>
+"""
 
 # An episode a full game
-train_episodes = 80
+train_episodes = int(sys.argv[1])
 
 def agent(state_shape, action_shape):
     """ The agent maps X-states to Y-actions
@@ -128,7 +131,7 @@ def main():
                 encoded_reshaped = encoded.reshape([1, encoded.shape[0],  encoded.shape[1],  encoded.shape[2]])
                 predicted = model.predict(encoded_reshaped, verbose=0).flatten()
                 action = np.argmax(predicted)
-            new_observation, reward, terminated, info = env.step(action)
+            new_observation, reward, done, info = env.step(action)
 
             replay_memory.append([observation, action, reward, new_observation, done])
 
