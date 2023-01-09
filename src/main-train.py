@@ -108,6 +108,7 @@ def main():
 
     steps_to_update_target_model = 0
 
+    total_steps = 0
 
     for episode in range(train_episodes):
         total_training_rewards = 0
@@ -132,7 +133,7 @@ def main():
                 predicted = model.predict(encoded_reshaped, verbose=0).flatten()
                 action = np.argmax(predicted)
             new_observation, reward, done, info = env.step(action)
-
+            total_steps += 1
             replay_memory.append([observation, action, reward, new_observation, done])
 
             # 3. Update the Main Network using the Bellman Equation
@@ -144,15 +145,14 @@ def main():
             total_training_rewards += reward
 
             if done:
-                print('Total training rewards: {} after n steps = {} with final reward = {}'.format(total_training_rewards, episode, reward))
-
                 if steps_to_update_target_model >= 100:
                     print('Copying main network weights to the target network weights')
                     target_model.set_weights(model.get_weights())
                     steps_to_update_target_model = 0
                 break
         ts_episode_end = time.time()
-        print(f"End train episode {episode} with {total_step_of_episode} episodes and {ts_episode_end-ts_episode_begin} s")
+        print(f"End train episode {episode} with {total_step_of_episode} episodes and {ts_episode_end-ts_episode_begin}s")
+        print(f"Total steps so far: {total_steps}")
         epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay * episode)
     env.close()
     model.save('bossfight-trained-model')
