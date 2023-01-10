@@ -14,14 +14,33 @@ import time
 import sys
 import absl.logging
 absl.logging.set_verbosity(absl.logging.ERROR)
+import signal, sys
+from pynput import keyboard
+from threading import Lock
 
+signaled_render_mode = None
+def on_press(key):
+    global signaled_render_mode
+    try:
+        if key.char == "h":
+            print("'h' is pressed! Render for human")
+            signaled_render_mode = "human"
+        elif key.char == "n":
+            print("'n' is pressed! No render")
+            signaled_render_mode = None
+    except:
+        print("Press special key! No care")
     
 def main(train_episodes, model_filename):
+    global signaled_render_mode
+    current_render_mode = None
+    listener = keyboard.Listener(on_press=on_press)
     RANDOM_SEED = 5
 
     env_origin = gym.make(
         "procgen:procgen-bossfight-v0", 
-        distribution_mode="easy"
+        distribution_mode="easy",
+        render_mode=current_render_mode
         )
     wrapping_env = en_wrapper.EnvWrapper(env_origin)
     
@@ -49,9 +68,20 @@ def main(train_episodes, model_filename):
     y = []
 
     steps_to_update_target_model = 0
-
+    listener.start()  # start to listen on a separate thread
     for episode in range(train_episodes):
         total_training_rewards = 0
+        if current_render_mode != signaled_render_mode:
+            current_render_mode = signaled_render_mode
+            saved_total_steps = wrapping_env.total_steps
+            wrapping_env.close()
+            env_origin = gym.make(
+                "procgen:procgen-bossfight-v0", 
+                distribution_mode="easy", 
+                render_mode=current_render_mode
+                )
+            wrapping_env = en_wrapper.EnvWrapper(env_origin)
+            wrapping_env.total_steps = saved_total_steps
         observation = wrapping_env.reset()
         done = False
         total_step_of_episode = 0
