@@ -3,9 +3,14 @@ import tensorflow as tf
 import numpy as np
 from tensorflow import keras
 import matplotlib.pyplot as plt
-   
+import RL_core.env_wrapper as en_wrapper
+from RL_core.model import encode_observation
+
 model = keras.models.load_model('bossfight-trained-model')
-env = gym.make("procgen:procgen-bossfight-v0")
+env_origin = gym.make(
+    "procgen:procgen-bossfight-v0"
+    )
+wrapping_env = en_wrapper.EnvWrapper(env_origin)
 test_episodes = 5
 
 def visualize_filter(model, state):
@@ -49,17 +54,15 @@ def visualize_filter(model, state):
 
 for episode in range(test_episodes):
     total_training_rewards = 0
-    observation = env.reset()
+    observation = wrapping_env.reset()
     done = False
     score = 0
     while not done:
-        encoded = observation
-        encoded_reshaped = encoded.reshape([1, encoded.shape[0],  encoded.shape[1],  encoded.shape[2]])
-        predicted = model.predict(encoded_reshaped, verbose=0).flatten()
+        predicted = model.predict(encode_observation(observation), verbose=0).flatten()
         # Inspect the filter
-        visualize_filter(model, observation)
+        # visualize_filter(model, observation)
         action = np.argmax(predicted)
-        observation, reward, done, info = env.step(action)
+        observation, reward, done, info = wrapping_env.step(action)
 
         print(f"reward={reward}")
 
