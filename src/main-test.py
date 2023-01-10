@@ -58,20 +58,18 @@ def main(model_filename):
         total_training_rewards = 0
         observation = wrapping_env.reset()
         done = False
-        score = 0
         while not done:
             predicted = model.predict(encode_observation(observation), verbose=0).flatten()
             # Inspect the filter
             # visualize_filter(model, observation)
             action = np.argmax(predicted)
             observation, reward, done, info = wrapping_env.step(action)
+            total_training_rewards += reward
 
-            print(f"reward={reward}")
-
-        print(f"Done test episode {episode}. Score is {score}")
+        print(f"Done test episode {episode}. Score is {total_training_rewards}")
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 2:
         print("Usage: python <this script> <path-of-model>")
         exit
     main(sys.argv[1])
