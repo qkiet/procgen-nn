@@ -103,24 +103,24 @@ def main(train_episodes, model_filename):
             new_observation, reward, done, info = wrapping_env.step(action)
             replay_memory.append([observation, action, reward, new_observation, done])
 
-            # 3. Update the Main Network using the Bellman Equation
-            if steps_to_update_target_model % 4 == 0 or done:
-                # Only if model is trained and updated, model get saved
-                if train(wrapping_env, replay_memory, model, target_model, done):
-                    model.save(model_filename)
-                    print(f"Update to '{model_filename}'")
-
             observation = new_observation
             total_training_rewards += reward
 
-            if done:
-                if steps_to_update_target_model >= 100:
-                    print('Copying main network weights to the target network weights')
-                    target_model.set_weights(model.get_weights())
-                    steps_to_update_target_model = 0
-                break
+        # After gather data, perform training
+        for each_step in range(0, total_step_of_episode):
+            # Update the Main Network using the Bellman Equation
+            if each_step % 4 == 0 or each_step == total_step_of_episode - 1:
+                 # Only if model is trained and updated, model get saved
+                if train(wrapping_env, replay_memory, model, target_model, done):
+                    model.save(model_filename)
+                    print(f"Update to '{model_filename}'")
+        if steps_to_update_target_model >= 100:
+            print('Copying main network weights to the target network weights')
+            target_model.set_weights(model.get_weights())
+            steps_to_update_target_model = 0
+                
         ts_episode_end = time.time()
-        print(f"End train episode {episode} with {total_step_of_episode} episodes and {ts_episode_end-ts_episode_begin}s")
+        print(f"End train episode {episode} with {total_step_of_episode} steps and {ts_episode_end-ts_episode_begin}s")
         print(f"Total steps so far: {wrapping_env.total_steps}")
         epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay * episode)
     
