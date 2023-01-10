@@ -12,15 +12,11 @@ import RL_core.env_wrapper as en_wrapper
 from collections import deque
 import time
 import sys
+import absl.logging
+absl.logging.set_verbosity(absl.logging.ERROR)
 
-"""
-    Usage: python <this script> <number of training episodes>
-"""
-
-# An episode a full game
-train_episodes = int(sys.argv[1])
     
-def main():
+def main(train_episodes, model_filename):
     RANDOM_SEED = 5
 
     env_origin = gym.make(
@@ -39,9 +35,9 @@ def main():
     decay = 0.01
     # 1. Initialize the Target and Main models
     # Main Model (updated every 4 steps)
-    model = create_agent(wrapping_env)
+    model = create_agent(model_filename, wrapping_env, need_saved=True)
     # Target Model (updated every 100 steps)
-    target_model = create_agent(wrapping_env)
+    target_model = create_agent(model_filename, wrapping_env)
     target_model.set_weights(model.get_weights())
 
     replay_memory = deque(maxlen=50_000)
@@ -79,7 +75,10 @@ def main():
 
             # 3. Update the Main Network using the Bellman Equation
             if steps_to_update_target_model % 4 == 0 or done:
-                train(wrapping_env, replay_memory, model, target_model, done)
+                # Only if model is trained and updated, model get saved
+                if train(wrapping_env, replay_memory, model, target_model, done):
+                    model.save(model_filename)
+                    print(f"Update to '{model_filename}'")
 
             observation = new_observation
             total_training_rewards += reward
@@ -94,8 +93,16 @@ def main():
         print(f"End train episode {episode} with {total_step_of_episode} episodes and {ts_episode_end-ts_episode_begin}s")
         print(f"Total steps so far: {wrapping_env.total_steps}")
         epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay * episode)
+    
     wrapping_env.close()
-    model.save('bossfight-trained-model')
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) != 3:
+        print("Usage: python <this script> <path-of-model> <number of training episodes> ")
+        print("Existing model filename will be updated, non-enxist model filename will be created")
+        exit
+    else:
+        # An episode a full game
+        train_episodes = int(sys.argv[2])
+        model_filename = sys.argv[1]
+        main(train_episodes, model_filename)

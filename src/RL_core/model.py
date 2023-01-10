@@ -4,11 +4,21 @@ import numpy as np
 
 
          
-def create_agent(env):
+def create_agent(model_filename, env, need_saved = False):
     """
-    This function create an agent for targeted environment
+    This function create an agent for targeted environment. Try
+    to load from model_filename first, if not good then create
+    entire new model
     """
-    return create_DQN_agent(env.observation_space.shape, env.action_space.n)
+    try:
+        model = tf.keras.models.load_model(model_filename)
+        print(f"Found existing model '{model_filename}'")
+    except:
+        print(f"Not found existing model '{model_filename}'. Create new one...")
+        model = create_DQN_agent(env.observation_space.shape, env.action_space.n)
+        if need_saved:
+            model.save(model_filename)
+    return model
 
 def create_DQN_agent(state_shape, action_shape):
     """ The agent maps X-states to Y-actions
@@ -38,7 +48,7 @@ def train(env, replay_memory, model, target_model, done):
 
     MIN_REPLAY_SIZE = 1000
     if len(replay_memory) < MIN_REPLAY_SIZE:
-        return
+        return False
 
     batch_size = 64 * 2
     mini_batch = random.sample(replay_memory, batch_size)
@@ -61,6 +71,7 @@ def train(env, replay_memory, model, target_model, done):
         X.append(observation)
         Y.append(current_qs)
     model.fit(np.array(X), np.array(Y), batch_size=batch_size, verbose=0, shuffle=True)
+    return True
 
 def encode_observation(observation):
     """
