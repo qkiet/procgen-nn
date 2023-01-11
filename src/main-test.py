@@ -1,29 +1,30 @@
-import gym
-import tensorflow as tf
-import numpy as np
-from tensorflow import keras
-import matplotlib.pyplot as plt
-import RL_core.env_wrapper as en_wrapper
-from RL_core.model import encode_observation
 import sys
-import signal, sys
-from pynput import keyboard
-from threading import Lock
-
 signaled_render_mode = None
-def on_press(key):
-    global signaled_render_mode
-    try:
-        if key.char == "h":
-            print("'h' is pressed! Render for human")
-            signaled_render_mode = "human"
-        elif key.char == "n":
-            print("'n' is pressed! No render")
-            signaled_render_mode = None
-    except:
-        print("Press special key! No care")
-
 def main(model_filename):
+    import gym
+    import tensorflow as tf
+    import numpy as np
+    from tensorflow import keras
+    import matplotlib.pyplot as plt
+    import RL_core.env_wrapper as en_wrapper
+    from RL_core.model import encode_observation
+
+    import signal, sys
+    from pynput import keyboard
+    from threading import Lock
+
+    
+    def on_press(key):
+        global signaled_render_mode
+        try:
+            if key.char == "h":
+                print("'h' is pressed! Render for human")
+                signaled_render_mode = "human"
+            elif key.char == "n":
+                print("'n' is pressed! No render")
+                signaled_render_mode = None
+        except:
+            print("Press special key! No care")
     global signaled_render_mode
     current_render_mode = None
     listener = keyboard.Listener(on_press=on_press)
@@ -99,6 +100,6 @@ def main(model_filename):
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("Usage: python <this script> <path-of-model>")
-        exit
+        print(f"Usage: python {sys.argv[0]} <path-of-model>\n\n")
+        exit()
     main(sys.argv[1])

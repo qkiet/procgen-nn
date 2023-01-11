@@ -3,36 +3,36 @@ A Minimal Deep Q-Learning Implementation (minDQN)
 Running this code will render the agent solving the CartPole environment using OpenAI gym. Our Minimal Deep Q-Network is approximately 150 lines of code. In addition, this implementation uses Tensorflow and Keras and should generally run in less than 15 minutes.
 Usage: python3 minDQN.py
 """
-
-import gym
-import numpy as np
-from RL_core.model import create_agent, train, encode_observation
-import RL_core.env_wrapper as en_wrapper
-
-from collections import deque
-import time
 import sys
-import absl.logging
-absl.logging.set_verbosity(absl.logging.ERROR)
-import signal, sys
-from pynput import keyboard
-from threading import Lock
-
 signaled_render_mode = None
-def on_press(key):
-    global signaled_render_mode
-    try:
-        if key.char == "h":
-            print("'h' is pressed! Render for human")
-            signaled_render_mode = "human"
-        elif key.char == "n":
-            print("'n' is pressed! No render")
-            signaled_render_mode = None
-    except:
-        print("Press special key! No care")
-    
 def main(train_episodes, model_filename):
     global signaled_render_mode
+    import gym
+    import numpy as np
+    from RL_core.model import create_agent, train, encode_observation
+    import RL_core.env_wrapper as en_wrapper
+
+    from collections import deque
+    import time
+    import absl.logging
+    absl.logging.set_verbosity(absl.logging.ERROR)
+    from pynput import keyboard
+    from threading import Lock
+
+    
+    def on_press(key):
+        global signaled_render_mode
+        try:
+            if key.char == "h":
+                print("'h' is pressed! Render for human")
+                signaled_render_mode = "human"
+            elif key.char == "n":
+                print("'n' is pressed! No render")
+                signaled_render_mode = None
+        except:
+            print("Press special key! No care")
+    
+
     current_render_mode = None
     listener = keyboard.Listener(on_press=on_press)
     RANDOM_SEED = 5
@@ -43,7 +43,7 @@ def main(train_episodes, model_filename):
         render_mode=current_render_mode
         )
     wrapping_env = en_wrapper.EnvWrapper(env_origin)
-    
+
     np.random.seed(RANDOM_SEED)
 
     print("Action Space: {}".format(wrapping_env.action_space))
@@ -110,7 +110,7 @@ def main(train_episodes, model_filename):
         for each_step in range(0, total_step_of_episode):
             # Update the Main Network using the Bellman Equation
             if each_step % 4 == 0 or each_step == total_step_of_episode - 1:
-                 # Only if model is trained and updated, model get saved
+                # Only if model is trained and updated, model get saved
                 if train(wrapping_env, replay_memory, model, target_model, done):
                     model.save(model_filename)
                     print(f"Update to '{model_filename}'")
@@ -123,14 +123,14 @@ def main(train_episodes, model_filename):
         print(f"End train episode {episode} with {total_step_of_episode} steps and {ts_episode_end-ts_episode_begin}s")
         print(f"Total steps so far: {wrapping_env.total_steps}")
         epsilon = min_epsilon + (max_epsilon - min_epsilon) * np.exp(-decay * episode)
-    
+
     wrapping_env.close()
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
-        print("Usage: python <this script> <path-of-model> <number of training episodes> ")
-        print("Existing model filename will be updated, non-enxist model filename will be created")
-        exit
+        print(f"Usage: python {sys.argv[0]} <path-of-model> <number of training episodes> ")
+        print("Existing model filename will be updated, non-enxist model filename will be created\n\n")
+        exit()
     else:
         # An episode a full game
         train_episodes = int(sys.argv[2])
