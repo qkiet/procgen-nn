@@ -6,11 +6,31 @@ import matplotlib.pyplot as plt
 import RL_core.env_wrapper as en_wrapper
 from RL_core.model import encode_observation
 import sys
+import signal, sys
+from pynput import keyboard
+from threading import Lock
+
+signaled_render_mode = None
+def on_press(key):
+    global signaled_render_mode
+    try:
+        if key.char == "h":
+            print("'h' is pressed! Render for human")
+            signaled_render_mode = "human"
+        elif key.char == "n":
+            print("'n' is pressed! No render")
+            signaled_render_mode = None
+    except:
+        print("Press special key! No care")
 
 def main(model_filename):
+    global signaled_render_mode
+    current_render_mode = None
+    listener = keyboard.Listener(on_press=on_press)
     model = keras.models.load_model(model_filename)
     env_origin = gym.make(
-        "procgen:procgen-bossfight-v0"
+        "procgen:procgen-bossfight-v0",
+        render_mode=current_render_mode
         )
     wrapping_env = en_wrapper.EnvWrapper(env_origin)
     test_episodes = 5
@@ -53,9 +73,18 @@ def main(model_filename):
                 plt.grid  ( False )
                 plt.imshow( display_grid, aspect='auto', cmap='viridis' )
 
-
+    listener.start()  # start to listen on a separate thread
     for episode in range(test_episodes):
         total_training_rewards = 0
+        if current_render_mode != signaled_render_mode:
+            current_render_mode = signaled_render_mode
+            wrapping_env.close()
+            env_origin = gym.make(
+                "procgen:procgen-bossfight-v0", 
+                distribution_mode="easy", 
+                render_mode=current_render_mode
+                )
+            wrapping_env = en_wrapper.EnvWrapper(env_origin)
         observation = wrapping_env.reset()
         done = False
         while not done:
